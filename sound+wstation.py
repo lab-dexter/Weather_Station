@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 import cayenne.client
 import time
+#Sound - Monitors GPIO pin 12 for input. A sound module is set up on physical pin 12.
+#Sound - https://pinout.xyz/pinout/wiringpi#
+import datetime
+import os
 import Adafruit_DHT
 from RPLCD import CharLCD
 #from RPLCD import CursorMode
@@ -31,6 +35,12 @@ E_DELAY = 0.00005
 
 SENSOR = Adafruit_DHT.DHT22; 
 PIN = 2
+
+GPIO.setmode(GPIO.BCM)
+SOUND_PIN = 18
+GPIO.setup(SOUND_PIN, GPIO.IN)
+
+count = 0
 
 # Cayenne authentication info. This should be obtained from the Cayenne Dashboard.
 MQTT_USERNAME  = "9b7f0060-be8c-11e7-be81-7712fc6df8b0"
@@ -157,9 +167,36 @@ while True:
     lcd_byte(LCD_LINE_2, LCD_CMD)
     lcd_string("Hum : " + str(round(humidity,3)) + " %",2) 
    
-    client.virtualWrite(1, temperature, "UNIT_CELSIUS", "TYPE_TEMPERATURE")
-    client.virtualWrite(2, humidity, "rel_hum", "p")
+    #client.virtualWrite(1, temperature, "UNIT_CELSIUS", "TYPE_TEMPERATURE")
+    #client.virtualWrite(2, humidity, "rel_hum", "p")
     #client.luxWrite(2, i*10)
     #client.hectoPascalWrite(3, i+800)
-    timestamp = time.time()
-    i = i+1
+    #timestamp = time.time()
+    #i = i+1
+	
+def DETECTED(SOUND_PIN):
+   global count
+   nowtime = datetime.datetime.now()
+   count += 1
+
+   print "Sound Detected! " + str(nowtime) + " " + str(count)
+   #os.system("/home/pi/scripts/playfile.py")
+
+   return nowtime
+print "Sound Module Test (CTRL+C to exit)"
+time.sleep(2)
+print "Ready"
+
+try:
+   GPIO.add_event_detect(SOUND_PIN, GPIO.RISING, callback=DETECTED)
+   while 1:
+      time.sleep(100)
+except KeyboardInterrupt:
+   print " Quit"
+   GPIO.cleanup()
+
+
+
+
+
+
